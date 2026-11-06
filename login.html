@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapters and co. — Login</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="login">
+  <header class="site-header" id="siteHeader"></header>
+
+  <main class="container section">
+    <form class="panel login-card" id="loginForm" novalidate>
+      <h2>Welcome back 📖</h2>
+      <p class="muted">Log in with the email and password you signed up with.</p>
+
+      <label>Email
+        <input type="email" id="email" required placeholder="you@example.com" autocomplete="email" />
+      </label>
+      <label>Password
+        <input type="password" id="password" required placeholder="Your password" autocomplete="current-password" />
+      </label>
+
+      <p class="discount-msg err" id="formError"></p>
+      <button type="submit" class="btn btn-dark btn-block" id="submitBtn">Login</button>
+      <p class="muted small center">Don't have an account? <a class="link" id="switchLink" href="signup.html">Sign up</a></p>
+    </form>
+  </main>
+
+  <footer class="site-footer">© Chapters and co. — Happy reading!</footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    const form = document.getElementById("loginForm");
+    const errorEl = document.getElementById("formError");
+    const submitBtn = document.getElementById("submitBtn");
+
+    // Keep the ?next= target when switching to sign up
+    document.getElementById("switchLink").href = `signup.html${location.search}`;
+
+    if (auth.current()) location.replace(safeNextPage());
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorEl.textContent = "";
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      if (!email.trim() || !password) return (errorEl.textContent = "Please enter your email and password.");
+
+      submitBtn.disabled = true;
+      const result = await auth.login({ email, password });
+      submitBtn.disabled = false;
+
+      if (!result.ok) return (errorEl.textContent = result.message);
+      location.href = safeNextPage();
+    });
+  </script>
+</body>
+</html>

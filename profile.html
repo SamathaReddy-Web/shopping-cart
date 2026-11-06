@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapters and co. — Profile</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="profile">
+  <header class="site-header" id="siteHeader"></header>
+
+  <main class="container section" id="profileRoot"></main>
+
+  <footer class="site-footer">© Chapters and co. — Happy reading!</footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    const root = document.getElementById("profileRoot");
+    const user = session.get();
+
+    if (!user) {
+      root.innerHTML = `
+        <div class="panel center">
+          <h2>You're not logged in</h2>
+          <p class="muted">Log in to see your profile and order history.</p>
+          <a href="login.html?next=profile.html" class="btn btn-dark">Login</a>
+          <p class="muted small">New here? <a href="signup.html?next=profile.html" class="link">Create an account</a></p>
+        </div>`;
+    } else {
+      const myOrders = orders.forUser(user.email);
+      const booksBought = myOrders.reduce((n, o) => n + o.itemCount, 0);
+      const totalSpent = myOrders.reduce((n, o) => n + o.total, 0);
+      const fmtDate = (iso) => new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+
+      root.innerHTML = `
+        <div class="panel profile-card">
+          <div class="avatar">${escapeHTML(user.name.charAt(0).toUpperCase())}</div>
+          <div>
+            <h2>${escapeHTML(user.name)}</h2>
+            <p class="muted">${escapeHTML(user.email)}</p>
+            <p class="muted small">Member since ${fmtDate(user.joined)}</p>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><span>${myOrders.length}</span>Orders</div>
+          <div class="stat"><span>${booksBought}</span>Books bought</div>
+          <div class="stat"><span>${money(totalSpent)}</span>Total spent</div>
+        </div>
+
+        <h3 class="sub-title">Order History</h3>
+        ${myOrders.length
+          ? myOrders.map((o) => `
+              <div class="panel order">
+                <div class="order-head">
+                  <strong>${o.id}</strong>
+                  <span class="muted">${fmtDate(o.date)}</span>
+                </div>
+                <ul class="order-items">
+                  ${o.items.map((i) => `<li><span>${i.title} × ${i.qty}</span><span>${money(i.price * i.qty)}</span></li>`).join("")}
+                </ul>
+                <div class="order-total">Total paid: <strong>${money(o.total)}</strong></div>
+              </div>`).join("")
+          : `<p class="muted">No orders yet. <a href="catalog.html" class="link">Start shopping →</a></p>`}`;
+    }
+  </script>
+</body>
+</html>

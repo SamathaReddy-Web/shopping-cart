@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapters and co. — Sign Up</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="signup">
+  <header class="site-header" id="siteHeader"></header>
+
+  <main class="container section">
+    <form class="panel login-card" id="signupForm" novalidate>
+      <h2>Create your account ✨</h2>
+      <p class="muted">Sign up to checkout and keep track of your orders.</p>
+
+      <label>Full name
+        <input type="text" id="name" required placeholder="Your name" autocomplete="name" />
+      </label>
+      <label>Email
+        <input type="email" id="email" required placeholder="you@example.com" autocomplete="email" />
+      </label>
+      <label>Password
+        <input type="password" id="password" required minlength="6" placeholder="At least 6 characters" autocomplete="new-password" />
+      </label>
+      <label>Confirm password
+        <input type="password" id="confirm" required placeholder="Re-enter password" autocomplete="new-password" />
+      </label>
+
+      <p class="discount-msg err" id="formError"></p>
+      <button type="submit" class="btn btn-dark btn-block" id="submitBtn">Sign Up</button>
+      <p class="muted small center">Already have an account? <a class="link" id="switchLink" href="login.html">Log in</a></p>
+    </form>
+  </main>
+
+  <footer class="site-footer">© Chapters and co. — Happy reading!</footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    const form = document.getElementById("signupForm");
+    const errorEl = document.getElementById("formError");
+    const submitBtn = document.getElementById("submitBtn");
+    const val = (id) => document.getElementById(id).value;
+
+    document.getElementById("switchLink").href = `login.html${location.search}`;
+
+    if (auth.current()) location.replace(safeNextPage());
+
+    // Each rule returns an error message, or "" if valid
+    const rules = [
+      () => (!val("name").trim() ? "Please enter your name." : ""),
+      () => (!/^\S+@\S+\.\S+$/.test(val("email").trim()) ? "Please enter a valid email address." : ""),
+      () => (val("password").length < 6 ? "Password must be at least 6 characters." : ""),
+      () => (val("password") !== val("confirm") ? "Passwords do not match." : ""),
+    ];
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const error = rules.map((rule) => rule()).find(Boolean);
+      errorEl.textContent = error || "";
+      if (error) return;
+
+      submitBtn.disabled = true;
+      const result = await auth.signup({ name: val("name"), email: val("email"), password: val("password") });
+      submitBtn.disabled = false;
+
+      if (!result.ok) return (errorEl.textContent = result.message);
+      toast("Account created! Welcome 🎉");
+      setTimeout(() => (location.href = safeNextPage()), 700);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapters and co. — Home</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="home">
+  <header class="site-header" id="siteHeader"></header>
+
+  <section class="hero">
+    <div class="container">
+      <h1>Welcome to Chapters and co.</h1>
+      <p>Open a Book, Open a World</p>
+      <a href="catalog.html" class="btn btn-dark">Browse Books</a>
+    </div>
+  </section>
+
+  <main class="container section">
+    <div class="section-head">
+      <h2>Featured Books</h2>
+      <a href="catalog.html" class="link">View all →</a>
+    </div>
+    <div class="book-grid" id="featuredGrid"></div>
+  </main>
+
+  <footer class="site-footer">© Chapters and co. — Happy reading!</footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    const FEATURED_IDS = [2, 3, 4, 1, 11, 5];
+    document.getElementById("featuredGrid").innerHTML = FEATURED_IDS
+      .map((id) => BOOKS.find((b) => b.id === id))
+      .map(bookCard)
+      .join("");
+  </script>
+</body>
+</html>

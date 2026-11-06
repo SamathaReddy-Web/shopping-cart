@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShopCart — Shopping Cart System</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <h1>🛍️ ShopCart</h1>
+    <button class="cart-toggle" id="cartToggle" aria-label="Open cart">
+      Cart <span class="badge" id="cartCount">0</span>
+    </button>
+  </header>
+
+  <main class="layout">
+    <section class="products">
+      <div class="products-head">
+        <h2>Products</h2>
+        <select id="categoryFilter" aria-label="Filter by category">
+          <option value="all">All categories</option>
+        </select>
+      </div>
+      <!-- Product cards are rendered here (event delegation on this container) -->
+      <div class="product-grid" id="productGrid"></div>
+    </section>
+
+    <aside class="cart" id="cartPanel">
+      <div class="cart-head">
+        <h2>Your Cart</h2>
+        <button class="link-btn" id="clearCart">Clear</button>
+      </div>
+
+      <!-- Cart items are rendered here (event delegation on this container) -->
+      <ul class="cart-items" id="cartItems"></ul>
+
+      <form class="discount" id="discountForm">
+        <input type="text" id="discountInput" placeholder="Discount code (try SAVE10)" />
+        <button type="submit">Apply</button>
+      </form>
+      <p class="discount-msg" id="discountMsg"></p>
+
+      <div class="summary" id="cartSummary"></div>
+
+      <button class="checkout" id="checkoutBtn">Checkout</button>
+    </aside>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

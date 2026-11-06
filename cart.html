@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapters and co. — Cart</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="cart">
+  <header class="site-header" id="siteHeader"></header>
+
+  <main class="container section">
+    <div class="section-head">
+      <h2 class="page-title">🛒 Your Cart</h2>
+      <button class="link danger" id="clearCart">Clear cart</button>
+    </div>
+
+    <div class="cart-layout">
+      <ul class="cart-list" id="cartList"></ul>
+
+      <aside class="summary-card">
+        <h3>Order Summary</h3>
+        <form class="discount" id="discountForm">
+          <input type="text" id="discountInput" placeholder="Discount code (try READ10)" />
+          <button type="submit" class="btn btn-dark btn-sm">Apply</button>
+        </form>
+        <p class="discount-msg" id="discountMsg"></p>
+        <div id="summary"></div>
+        <button class="btn btn-dark btn-block" id="checkoutBtn">Checkout</button>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="site-footer">© Chapters and co. — Happy reading!</footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    const listEl = document.getElementById("cartList");
+    const summaryEl = document.getElementById("summary");
+    const discountForm = document.getElementById("discountForm");
+    const discountInput = document.getElementById("discountInput");
+    const discountMsg = document.getElementById("discountMsg");
+    const checkoutBtn = document.getElementById("checkoutBtn");
+
+    const cartRow = (item) => `
+      <li class="cart-row" data-id="${item.id}">
+        ${coverHTML(item, "cover-sm")}
+        <div class="cart-row-info">
+          <h3>${item.title}</h3>
+          <p class="book-author">${item.author}</p>
+          <p class="muted">${money(item.price)} each</p>
+          <div class="qty">
+            <button data-action="decrease" aria-label="Decrease quantity">−</button>
+            <input type="number" min="1" max="99" value="${item.qty}" data-action="set-qty" aria-label="Quantity" />
+            <button data-action="increase" aria-label="Increase quantity">+</button>
+          </div>
+        </div>
+        <div class="cart-row-right">
+          <strong>${money(item.price * item.qty)}</strong>
+          <button class="link danger" data-action="remove">Remove</button>
+        </div>
+      </li>`;
+
+    const summaryView = (s) => `
+      <div class="summary-row"><span>Subtotal (${s.itemCount} item${s.itemCount === 1 ? "" : "s"})</span><span>${money(s.subtotal)}</span></div>
+      ${s.discountCode ? `
+        <div class="summary-row discount-row">
+          <span>Discount (${s.discountCode}) <button class="link danger" data-action="remove-code">remove</button></span>
+          <span>−${money(s.discount)}</span>
+        </div>
+        ${s.discountPending ? `<p class="muted small">Subtotal is below this code's minimum, so it isn't applied right now.</p>` : ""}` : ""}
+      <div class="summary-row"><span>GST (${Math.round(s.taxRate * 100)}%)</span><span>${money(s.tax)}</span></div>
+      <div class="summary-row total"><span>Total</span><span>${money(s.total)}</span></div>`;
+
+    // Callback registered with the cart: re-render on every change
+    cart.subscribe((state) => {
+      listEl.innerHTML = state.items.length
+        ? state.items.map(cartRow).join("")
+        : `<li class="empty-cart">Your cart is empty.<br /><a href="catalog.html" class="btn btn-dark">Browse Books</a></li>`;
+      summaryEl.innerHTML = summaryView(state);
+      checkoutBtn.disabled = state.items.length === 0;
+    });
+
+    // Event delegation for every row's buttons
+    const actions = {
+      increase: (id) => cart.updateQuantity(id, cart.getQty(id) + 1),
+      decrease: (id) => cart.updateQuantity(id, cart.getQty(id) - 1),
+      remove: (id) => cart.removeItem(id),
+    };
+
+    listEl.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-action]");
+      if (!btn) return;
+      actions[btn.dataset.action]?.(Number(btn.closest(".cart-row").dataset.id));
+    });
+
+    listEl.addEventListener("change", (e) => {
+      if (e.target.dataset.action !== "set-qty") return;
+      cart.updateQuantity(Number(e.target.closest(".cart-row").dataset.id), e.target.value);
+    });
+
+    summaryEl.addEventListener("click", (e) => {
+      if (e.target.closest('[data-action="remove-code"]')) {
+        cart.removeDiscount();
+        discountMsg.textContent = "";
+      }
+    });
+
+    discountForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const result = cart.applyDiscount(discountInput.value);
+      discountMsg.textContent = result.message;
+      discountMsg.className = `discount-msg ${result.ok ? "ok" : "err"}`;
+      if (result.ok) discountInput.value = "";
+    });
+
+    document.getElementById("clearCart").addEventListener("click", () => {
+      if (cart.getState().items.length && confirm("Remove all books from your cart?")) {
+        cart.clear();
+        discountMsg.textContent = "";
+      }
+    });
+
+    checkoutBtn.addEventListener("click", () => {
+      const user = session.get();
+      if (!user) {
+        toast("Please log in to checkout");
+        setTimeout(() => (location.href = "login.html?next=cart.html"), 800);
+        return;
+      }
+      const s = cart.getState();
+      orders.add({
+        id: `ORD-${Date.now().toString().slice(-6)}`,
+        email: user.email,
+        date: new Date().toISOString(),
+        items: s.items.map(({ id, title, qty, price }) => ({ id, title, qty, price })),
+        itemCount: s.itemCount,
+        total: s.total,
+      });
+      cart.clear();
+      discountMsg.textContent = "";
+      alert(`Thank you, ${user.name}! Your order of ${s.itemCount} book(s) totalling ${money(s.total)} has been placed.`);
+      location.href = "profile.html";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapters and co. — Books</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="books">
+  <header class="site-header" id="siteHeader"></header>
+
+  <main class="container section">
+    <h2 class="page-title">📚 Our Books</h2>
+
+    <input type="search" class="search" id="searchInput" placeholder="Search books..." aria-label="Search books" />
+
+    <div class="categories">
+      <span class="categories-label">Categories:</span>
+      <div class="pills" id="categoryPills"></div>
+    </div>
+
+    <p class="result-count" id="resultCount"></p>
+    <div class="book-grid" id="bookGrid"></div>
+  </main>
+
+  <footer class="site-footer">© Chapters and co. — Happy reading!</footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    const grid = document.getElementById("bookGrid");
+    const pillsEl = document.getElementById("categoryPills");
+    const searchInput = document.getElementById("searchInput");
+    const resultCount = document.getElementById("resultCount");
+
+    // Filter state kept in a closure-backed object
+    const filters = { category: new URLSearchParams(location.search).get("category") || "All", query: "" };
+
+    const categories = ["All", ...new Set(BOOKS.map((b) => b.category))];
+
+    function renderPills() {
+      pillsEl.innerHTML = categories
+        .map((c) => `<button class="pill ${c === filters.category ? "active" : ""}" data-category="${c}">${c}</button>`)
+        .join("");
+    }
+
+    // Higher-order filter: build a predicate from the current filters
+    const matches = ({ category, query }) => (book) =>
+      (category === "All" || book.category === category) &&
+      `${book.title} ${book.author}`.toLowerCase().includes(query);
+
+    function renderBooks() {
+      const list = BOOKS.filter(matches(filters));
+      resultCount.textContent = `${list.length} book${list.length === 1 ? "" : "s"} found`;
+      grid.innerHTML = list.length
+        ? list.map(bookCard).join("")
+        : `<p class="empty">No books match your search.</p>`;
+    }
+
+    // Event delegation: one listener for all category pills
+    pillsEl.addEventListener("click", (e) => {
+      const pill = e.target.closest("[data-category]");
+      if (!pill) return;
+      filters.category = pill.dataset.category;
+      renderPills();
+      renderBooks();
+    });
+
+    searchInput.addEventListener("input", (e) => {
+      filters.query = e.target.value.trim().toLowerCase();
+      renderBooks();
+    });
+
+    renderPills();
+    renderBooks();
+  </script>
+</body>
+</html>
